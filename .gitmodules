@@ -1,0 +1,6 @@
+[submodule "3DLUT"]
+	path = 3DLUT
+	url = git@github.com:HuiZeng/Image-Adaptive-3DLUT.git
+[submodule "ccHarmony"]
+	path = ccHarmony
+	url = git@github.com:bcmi/Image-Harmonization-Dataset-ccHarmony.git
