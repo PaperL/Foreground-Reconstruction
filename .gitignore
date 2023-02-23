@@ -1,2 +1,5 @@
 demo/*.txt
 demo/output*
+testspace/
+checkpoint/
+*__pycache__*
