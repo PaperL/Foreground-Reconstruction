@@ -10,7 +10,8 @@ import numpy as np
 from tqdm import tqdm
 from termcolor import colored
 
-from .net import LUTFR
+
+from util.net import LUTFR
 
 def get_argument():
     parser = argparse.ArgumentParser()
@@ -58,6 +59,7 @@ def init_data(config):
     with open(str(lut_folder_path/'list.txt'), 'r') as f:
         lut_names = f.readlines()
     
+    lutN = len(lut_names)
     lut = [[], []]
     dim = 33
     print(colored('Loading LUTs...', 'yellow'))
@@ -77,18 +79,24 @@ def init_data(config):
                 lut[t].append(buffer)
     lut = np.array(lut)
     print(lut.shape)
-    return {'composite':composite, 'mask':mask, 'gt':gt, 'lut':lut}
+    return {'composite':composite, 'mask':mask, 'gt':gt, 'lut':lut, 'lutN': lutN}
 
 
-def calculate_fMSE(gt, pred, mask):
-    print(mask.size())
-    diff = mask * ((pred - gt) ** 2)
-    return (diff.sum() / (diff.size(2) * mask.sum() + 1e-6))
+# def calculate_fMSE(gt, pred, mask):
+#     loss_fn = torch.nn.MSELoss()
+#     fmse_loss = torch.nn.MSELoss(pred * mask, gt * mask)
+#     return fmse_loss
 
 
-def init_net(device, lut):
-    model = LUTFR(device, lut)
+def init_net(device, lut, lutN):
+    model = LUTFR(device, lut, lutN)
     model = model.to(device)
+
+    # print(colored('Parameters: ', 'red'), list(model.parameters()))
+    # print(colored('Model: ', 'red'), model)
+    # for name, param in model.named_parameters():
+    #     if param.requires_grad:
+    #         print(name, param.data)
 
     optimizer = torch.optim.Adam(
         model.parameters(), lr=1e-3, betas=(0.9, 0.999), eps=1e-8)

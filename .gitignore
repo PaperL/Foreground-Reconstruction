@@ -3,3 +3,5 @@ demo/output*
 testspace/
 checkpoint/
 *__pycache__*
+*temp*
+.idea/

@@ -1,7 +1,7 @@
 CHECKPOINT_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/checkpoint"
 LOOP_TIME_PER_EPOCH: 1000
 
-DATA_NAME: "c89"
+DATA_NAME: "c136"
 DATASET_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/testspace"
 
 LUT_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/testspace/lut"
