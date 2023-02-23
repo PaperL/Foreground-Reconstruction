@@ -1,7 +1,7 @@
 CHECKPOINT_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/checkpoint"
 LOOP_TIME_PER_EPOCH: 1000
 
-DATA_NAME: "c136"
-DATASET_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/testspace"
+DATASET_PATH: "/data/tanlinfeng/IHD/HFlickr"
+OUTPUT_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/testspace/RESULT"
 
 LUT_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/testspace/lut"

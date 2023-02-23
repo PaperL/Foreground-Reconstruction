@@ -17,6 +17,8 @@ def get_argument():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=int, default=0, required=False)
     parser.add_argument('--checkpoint', type=str, required=False)
+    parser.add_argument('--data_name', type=str, required=True)
+    parser.add_argument('--copy_data', type=bool, default=False, required=False)
     return parser.parse_args()
 
 
@@ -30,20 +32,31 @@ def init_exp():
     return args, config, checkpoint_path, device
 
 
-def init_data(config):
+def get_first_file(path, rule):
+    paths = list(path.glob(rule))
+    return min(paths)
+
+def init_data(config, args):
     trans_tensor = transforms.Compose([
         transforms.ToTensor()
     ])
 
     dataset_folder_path = Path(config['DATASET_PATH'])
     assert dataset_folder_path.is_dir and dataset_folder_path.exists
-    composite_path = list((dataset_folder_path / 'composite').glob(config['DATA_NAME']+'*'))[0]
-    mask_path = list((dataset_folder_path / 'mask').glob(config['DATA_NAME']+'*'))[0]
-    gt_path = list((dataset_folder_path / 'gt').glob(config['DATA_NAME']+'*'))[0]
+
+    name = args.data_name
+    composite_path = get_first_file(dataset_folder_path / 'composite_images', name+'_*')
+    mask_path = get_first_file(dataset_folder_path / 'masks', name+'_*')
+    gt_path = get_first_file(dataset_folder_path / 'real_images', name+'.*')
     print(colored('Compoiste image, mask, ground truth:', 'yellow'))
     print(str(composite_path))
     print(str(mask_path))
     print(str(gt_path))
+    if args.copy_data:
+        result_path = Path(config['OUTPUT_PATH'])
+        shutil.copyfile(str(composite_path), str(result_path/(name+'_2.jpg')))
+        shutil.copyfile(str(mask_path), str(result_path/(name+'_1.png')))
+        shutil.copyfile(str(gt_path), str(result_path/(name+'_0.jpg')))
 
     composite = cv2.imread(str(composite_path))
     composite = cv2.cvtColor(composite, cv2.COLOR_BGR2RGB)
@@ -63,7 +76,7 @@ def init_data(config):
     lut = [[], []]
     dim = 33
     print(colored('Loading LUTs...', 'yellow'))
-    for lut_name in tqdm(lut_names):
+    for lut_name in tqdm(lut_names, leave=False):
         for t in range(2):
             with open(str(lut_folder_path/(lut_name[:-1]+'_%d.txt'%t)), 'r') as f:
                 buffer = np.zeros((3,dim,dim,dim), dtype=np.float32)
@@ -111,8 +124,8 @@ def load_checkpoint(model, optimizer, checkpoint_path, checkpoint_name):
     optimizer.load_state_dict(checkpoint_data['optimizer_state_dict'])
     return checkpoint_data['epoch_id'] + 1
 
-def save_checkpoint(checkpoint_path, model, optimizer, epoch_id, epoch_loss):
-    statics_file = checkpoint_path / '@statics.yaml'
+def save_checkpoint(checkpoint_path, model, optimizer, epoch_id, epoch_loss, data_name):
+    statics_file = checkpoint_path / (data_name+'_statics.yaml')
     checkpoint_name = str(epoch_id).zfill(4)
     with open(str(statics_file), 'a+') as file:
         statics = yaml.full_load(file)
@@ -129,7 +142,7 @@ def save_checkpoint(checkpoint_path, model, optimizer, epoch_id, epoch_loss):
         'loss': epoch_loss
     }
     torch.save(checkpoint_data,
-                str(checkpoint_path / ('last_epoch.pt')))
-    if epoch_id % 10 == 0:
-        shutil.copy(str(checkpoint_path / ('last_epoch.pt')),
-                    str(checkpoint_path / (checkpoint_name + '.pt')))
+                str(checkpoint_path / (data_name+'_checkpoint.pt')))
+    # if epoch_id % 10 == 0:
+    #     shutil.copy(str(checkpoint_path / ('last_epoch.pt')),
+    #                 str(checkpoint_path / (checkpoint_name + '.pt')))
