@@ -9,6 +9,7 @@ import shutil
 import numpy as np
 from tqdm import tqdm
 from termcolor import colored
+import os
 
 
 from util.net import LUTFR
@@ -16,8 +17,9 @@ from util.net import LUTFR
 def get_argument():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=int, default=0, required=False)
+    parser.add_argument('--part', type=int, required=True)
     parser.add_argument('--checkpoint', type=str, required=False)
-    parser.add_argument('--data_name', type=str, required=True)
+    parser.add_argument('--data_name', type=str, required=False)
     parser.add_argument('--copy_data', type=bool, default=False, required=False)
     return parser.parse_args()
 
@@ -28,9 +30,20 @@ def init_exp():
         config = yaml.safe_load(stream)
     checkpoint_path = Path(config['CHECKPOINT_PATH'])
     # checkpoint_path.mkdir(parents=False, exist_ok=False)
-    device = torch.device(f'cuda:{args.gpu}')
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
+    device = torch.device(f'cuda:0')
     return args, config, checkpoint_path, device
 
+def get_data_names(config):
+    dataset_folder_path = Path(config['DATASET_PATH'])
+    names=[]
+    with open(dataset_folder_path / str('HFlickr_test.txt'), "r") as f:
+        names.extend([x.strip().split('.')[0] for x in f.readlines()])
+    with open(dataset_folder_path / str('HFlickr_train.txt'), "r") as f:
+        names.extend([x.strip().split('.')[0] for x in f.readlines()])
+    names.sort()
+    print(colored(f'Collect {len(names)} data points.', 'red'))
+    return names
 
 def get_first_file(path, rule):
     paths = list(path.glob(rule))
@@ -45,9 +58,10 @@ def init_data(config, args):
     assert dataset_folder_path.is_dir and dataset_folder_path.exists
 
     name = args.data_name
-    composite_path = get_first_file(dataset_folder_path / 'composite_images', name+'_*')
-    mask_path = get_first_file(dataset_folder_path / 'masks', name+'_*')
-    gt_path = get_first_file(dataset_folder_path / 'real_images', name+'.*')
+    print(name)
+    composite_path = get_first_file(dataset_folder_path / 'composite_images', name+'.*')
+    mask_path = get_first_file(dataset_folder_path / 'masks', '_'.join(name.split('_')[:-1])+'.*')
+    gt_path = get_first_file(dataset_folder_path / 'real_images', name.split('_')[0]+'.*')
     print(colored('Compoiste image, mask, ground truth:', 'yellow'))
     print(str(composite_path))
     print(str(mask_path))
@@ -67,6 +81,9 @@ def init_data(config, args):
     gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)
     gt = trans_tensor(gt)
 
+    return {'composite':composite, 'mask':mask, 'gt':gt}
+
+def init_luts(config):
     lut_folder_path = Path(config['LUT_PATH'])
     assert lut_folder_path.is_dir and lut_folder_path.exists
     with open(str(lut_folder_path/'list.txt'), 'r') as f:
@@ -91,14 +108,20 @@ def init_data(config, args):
                             buffer[2,i,j,k] = float(x[2])
                 lut[t].append(buffer)
     lut = np.array(lut)
-    print(lut.shape)
-    return {'composite':composite, 'mask':mask, 'gt':gt, 'lut':lut, 'lutN': lutN}
+    # print(lut.shape)
+    return {'lut':lut, 'lutN': lutN}
 
-
-# def calculate_fMSE(gt, pred, mask):
-#     loss_fn = torch.nn.MSELoss()
-#     fmse_loss = torch.nn.MSELoss(pred * mask, gt * mask)
-#     return fmse_loss
+def calculate_fMSE(pred, comp, mask):
+    # loss_fn = torch.nn.MSELoss()
+    # fmse_loss = torch.nn.MSELoss(pred * mask, gt * mask)
+    # d_mask = mask.to(torch.uint8)
+    # d_mask_expanded = d_mask.expand_as(pred)
+    # out = (pred[~d_mask_expanded] - gt[~d_mask_expanded]) ** 2
+    # ls = out.mean()
+    # mask_expanded = mask.expand_as(pred)
+    # print(mask.shape, pred.shape, comp.shape)
+    diff = mask * (((comp - pred) * 255.) ** 2)
+    return (diff.sum() / mask.sum()) / 3
 
 
 def init_net(device, lut, lutN):
