@@ -1,9 +1,11 @@
 CHECKPOINT_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/checkpoint"
-LOOP_TIME_PER_EPOCH: 10001
+LOOP_TIME_PER_EPOCH: 20001
 
 DATASET_PATH: "/data/tanlinfeng/IHD/HFlickr"
 OUTPUT_PATH: "/data/smb_shared/@Dataset/IHD_FR/HFlickr/rerun"
+LC_OUTPUT_PATH: "/data/smb_shared/@Dataset/IHD_FR/HFlickr/rerun_lc"
 TODO_LIST: "/home/qiutianyuan/workspace/Foreground-Reconstruction/temp_todo/HFlickr_info.txt"
+PRETRAINED_PATH: "/data/smb_shared/@Dataset/IHD_FR/HFlickr/foreground_images_fix"
 RERUN_INFO_OUTPUT: "/home/qiutianyuan/workspace/Foreground-Reconstruction/temp_todo/HFlickr_rerun.txt"
 
 LUT_PATH: "/home/qiutianyuan/workspace/Foreground-Reconstruction/testspace/lut"

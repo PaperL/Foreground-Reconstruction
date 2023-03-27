@@ -13,7 +13,7 @@ if __name__ == '__main__':
         = train_func.init_exp()
     # names = train_func.get_data_names(config)
     div_part_id = args.part
-    div_part_num = 8
+    div_part_num = 4
 
     finished_names = []
     finished_folder = Path(config['OUTPUT_PATH'])
@@ -43,8 +43,9 @@ if __name__ == '__main__':
     luts = train_func.init_luts(config)
 
     for t in range(start_id,end_id):
-        print(colored(f't: {t}.', 'green'))
+        print(f'{start_id} {end_id}, '+colored(f't: {t}.', 'green'))
         args.data_name = todo_names[t]
+        name = todo_names[t]
         if(args.data_name in finished_names):
             print(colored(f'Skip {args.data_name}.', 'yellow'))
             continue
@@ -87,12 +88,12 @@ if __name__ == '__main__':
                     progress_bar.set_description('%.2f' % (loss_val))
                 # print(loss_val, mask_area, tot_area, mask_cover_rate, loss_val*tot_area, loss_val*mask_area, loss_val*tot_area/mask_cover_rate)
             # print(final_loss_value, final_loss_value * mask_area)
-                if loss_val < 95.:
+                if loss_val < 98.:
                     print(colored(f'Finish in {i}th loop.', 'red'))
                     break
             progress_bar.close()
             with open(config['RERUN_INFO_OUTPUT'], 'a') as f:
-                f.write(f'{todo_names[t]} {loss_val} {i}\n')
+                f.write(f'{name} {loss_val} {i}\n')
             # epoch_loss = loss_sum
             # print(f'Epoch result:')
             # print(f'Loss: {colored(str(round(epoch_loss,2)), "green")}')
@@ -105,8 +106,11 @@ if __name__ == '__main__':
             # name_parts[1] = '2'
             # # name_parts[2] = str(int(name_parts[2])+2)
             # output_name = '_'.join(name_parts) + '.jpg'
-            output_name = todo_names[t] + '.jpg'
+            output_name = name + '.jpg'
             im.save(str(config['OUTPUT_PATH']+'/'+output_name), quality=100)
+
+            torch.save(model.lc0, (config['LC_OUTPUT_PATH']+'/'+name+'_0.pt'))
+            torch.save(model.lc1, (config['LC_OUTPUT_PATH']+'/'+name+'_1.pt'))
 
             # train_func.save_checkpoint(
             #     checkpoint_path, model, optimizer, epoch_id, epoch_loss, args.data_name)

@@ -61,7 +61,14 @@ def init_data(config, args):
     print(name)
     composite_path = get_first_file(dataset_folder_path / 'composite_images', name+'.*')
     mask_path = get_first_file(dataset_folder_path / 'masks', '_'.join(name.split('_')[:-1])+'.*')
-    gt_path = get_first_file(dataset_folder_path / 'real_images', name.split('_')[0]+'.*')
+    # gt_path = get_first_file(dataset_folder_path / 'real_images', name.split('_')[0]+'.*')
+    gt_path = get_first_file(Path(config['PRETRAINED_PATH']), name+'.*')
+
+    result_path = list(Path(config['OUTPUT_PATH']).glob(name+'.*'))
+    if len(result_path) != 0:
+        gt_path = result_path[0]
+        print(f'{name} exsits')
+    
     print(colored('Compoiste image, mask, ground truth:', 'yellow'))
     print(str(composite_path))
     print(str(mask_path))
@@ -112,16 +119,9 @@ def init_luts(config):
     return {'lut':lut, 'lutN': lutN}
 
 def calculate_fMSE(pred, comp, mask):
-    # loss_fn = torch.nn.MSELoss()
-    # fmse_loss = torch.nn.MSELoss(pred * mask, gt * mask)
-    # d_mask = mask.to(torch.uint8)
-    # d_mask_expanded = d_mask.expand_as(pred)
-    # out = (pred[~d_mask_expanded] - gt[~d_mask_expanded]) ** 2
-    # ls = out.mean()
-    # mask_expanded = mask.expand_as(pred)
-    # print(mask.shape, pred.shape, comp.shape)
-    diff = mask * (((comp - pred) * 255.) ** 2)
-    return (diff.sum() / mask.sum()) / 3
+    mask_expand = mask.expand_as(pred)
+    diff1 = mask_expand * (((comp - pred)*255.) ** 2)
+    return (diff1.sum() / mask_expand.sum())
 
 
 def init_net(device, lut, lutN):
