@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
                 output = model(gt)
 
-                loss_fn = torch.nn.MSELoss()
+                # loss_fn = torch.nn.MSELoss()
                 # loss = loss_fn(output, composite)
                 # loss = loss_fn(output*mask, composite*mask)
                 loss = train_func.calculate_fMSE(output, composite, mask)
